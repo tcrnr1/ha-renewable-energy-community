@@ -42,6 +42,7 @@ Platform | Description
 Using your HA configuration directory (folder) as a starting point you should now also have this:
 
 ## Import Data:
+## Import Data:
 
 To import the data, the CSV file must be prepared accordingly. The CSV file may only contain the following columns: date, time, and the respective column you want to import, either energy community or residual grid import. Delete all unnecessary columns from the CSV file.
 
