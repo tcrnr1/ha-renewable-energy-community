@@ -55,7 +55,10 @@ async def async_setup_entry(
         RenewableEnergyCommunitySensor.import_report.__name__,
     )
 
-    async_add_devices([RenewableEnergyCommunitySensor(config_entry)])
+    async_add_devices(
+        [RenewableEnergyCommunitySensor(config_entry)]
+        [ResidualGridConsumptionSensor(config_entry)]
+    )
 
 
 def get_csv_data_value_key(csv_data: list) -> str:
@@ -271,3 +274,160 @@ class RenewableEnergyCommunitySensor(SensorEntity):
         _LOGGER.debug(statistics)
         _LOGGER.debug(metadata)
         async_import_statistics(self.hass, metadata, statistics)
+
+class ResidualGridConsumptionSensor(SensorEntity):
+    """Residual Grid Consumption Sensor class."""
+
+    def __init__(self, config_entry: ConfigEntry):
+        """Initialize the sensor."""
+        self.config_entry = config_entry
+        _unique_id = config_entry.data[CONF_METER_POINT_NUMBER]
+        _name = config_entry.data.get(CONF_NAME, DEFAULT_NAME)
+        self._attr_name = f"{_name} Energy"
+
+        self._attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
+        self._attr_device_class = SensorDeviceClass.ENERGY
+        self._attr_state_class = SensorStateClass.TOTAL
+        self._attr_should_poll = False
+        self._attr_icon = "mdi:transmission-tower-import"
+        self._attr_available = True
+
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, _unique_id)}, name=_name
+        )
+        self._attr_unique_id = f"{_unique_id}_energy"
+
+    async def import_report(self, path: str) -> None:
+        """Service to import csv data from path."""
+        _LOGGER.debug("Import Report executed with path: %s", path)
+        _LOGGER.debug(
+            "Entity: %s; Entity_ID: %s; Unique_ID: %s",
+            self.name,
+            self.entity_id,
+            self.unique_id,
+        )
+
+        # metadata for external stats
+        # metadata = StatisticMetaData(
+        #     unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        #     state_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        #     source=DOMAIN,
+        #     name=self.name,
+        #     statistic_id=self.statistic_id,
+        #     has_mean=False,
+        #     has_sum=True,
+        # )
+        # metadata for internal stats
+        metadata = StatisticMetaData(
+            unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+            # state_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+            source="recorder",
+            name=self.name,
+            statistic_id=self.entity_id,
+            has_mean=False,
+            has_sum=True,
+        )
+        statistics = []
+
+        csv_data = get_csv_data_list_from_file(path)
+
+        if len(csv_data) % 4 != 0:
+            raise HomeAssistantError(
+                "Report to import seems to be corrupted. Please ensure that there are at least 4 QH values per hour."
+            )
+
+        last_inserted_stat = await get_instance(self.hass).async_add_executor_job(
+            get_last_statistics, self.hass, 1, self.entity_id, True, {"sum"}
+        )
+        inserted_stats = {self.entity_id: []}
+        _LOGGER.debug("Last inserted stat:")
+        _LOGGER.debug(last_inserted_stat)
+
+        if len(last_inserted_stat) == 0 or len(last_inserted_stat[self.entity_id]) == 0:
+            _sum = Decimal(0)
+            _LOGGER.debug("No previous inserted stats, start sum with 0.")
+        elif (
+            len(last_inserted_stat) == 1
+            and len(last_inserted_stat[self.entity_id]) == 1
+            and parse_statistic_value_to_datetime(
+                last_inserted_stat[self.entity_id][0]["start"]
+            )
+            < parse_csv_date_str(csv_data[0][START_TIME_KEY])
+        ):
+            _sum = parse_value_to_decimal(last_inserted_stat[self.entity_id][0]["sum"])
+            _LOGGER.debug("Previous inserted stats found, start sum with %f.", _sum)
+        else:
+            inserted_stats = await get_instance(self.hass).async_add_executor_job(
+                statistics_during_period,
+                self.hass,
+                parse_csv_date_str(csv_data[0][START_TIME_KEY]) - timedelta(hours=1),
+                None,
+                [self.entity_id],
+                "hour",
+                None,
+                {"sum", "state"},
+            )
+            _LOGGER.debug("Inserted stats:")
+            _LOGGER.debug(inserted_stats)
+            _sum = (
+                parse_value_to_decimal(inserted_stats[self.entity_id][0]["sum"])
+                if len(inserted_stats) > 0
+                and len(inserted_stats[self.entity_id]) > 0
+                and parse_statistic_value_to_datetime(
+                    inserted_stats[self.entity_id][0]["start"]
+                )
+                < parse_csv_date_str(csv_data[0][START_TIME_KEY])
+                else Decimal(0)
+            )
+            _LOGGER.debug("Overlap detected, start sum with %f.", _sum)
+
+        hourly_sum = Decimal(0)
+        start = None
+        csv_data_value_key = get_csv_data_value_key(csv_data)
+        daylight_saving_change_needs_additional_hour = False
+        for index, record in enumerate(csv_data, start=1):
+            hourly_sum += parse_german_number_str_to_decimal(record[csv_data_value_key])
+            if index % 4 == 1:
+                if not validate_hour_block(csv_data[(index - 1) : (index - 1) + 4]):
+                    raise HomeAssistantError(
+                        "Invalid hour block detected. Start time of QH values must always be in the following order: xx:00, xx:15, xx:30, xx:45."
+                    )
+                start = parse_csv_date_str(record[START_TIME_KEY])
+                if daylight_saving_change_needs_additional_hour:
+                    # double check for daylight saving change, reset the flag anyway
+                    if start == statistics[-1]["start"]:
+                        start += timedelta(hours=1)
+                    daylight_saving_change_needs_additional_hour = False
+            if index % 4 == 0:
+                # LINZ NETZ indicates a winter daylight saving change when the start_time of an hour block is equal to the end_time.
+                # Therefore it is necessary to add an additional (UTC) hour to the next hour.
+                if start == parse_csv_date_str(record[END_TIME_KEY]):
+                    daylight_saving_change_needs_additional_hour = True
+                _sum += hourly_sum
+                statistics.append(
+                    StatisticData(
+                        start=start,
+                        state=hourly_sum,
+                        sum=_sum,
+                    )
+                )
+                hourly_sum = Decimal(0)
+        last_added_stat = statistics[-1]
+        for stat in inserted_stats[self.entity_id]:
+            if (
+                parse_statistic_value_to_datetime(stat["start"])
+                <= last_added_stat["start"]
+            ):
+                continue
+            _sum += parse_value_to_decimal(stat["state"])
+            statistics.append(
+                StatisticData(
+                    start=parse_statistic_value_to_datetime(stat["start"]),
+                    state=stat["state"],
+                    sum=_sum,
+                )
+            )
+        _LOGGER.debug(statistics)
+        _LOGGER.debug(metadata)
+        async_import_statistics(self.hass, metadata, statistics)
+
