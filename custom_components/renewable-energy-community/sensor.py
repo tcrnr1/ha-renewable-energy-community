@@ -53,6 +53,7 @@ async def async_setup_entry(
             vol.Required("path"): str,
         },
         RenewableEnergyCommunitySensor.import_report.__name__,
+        ResidualGridConsumptionSensor.import_report.__name__,
     )
 
     async_add_devices(
