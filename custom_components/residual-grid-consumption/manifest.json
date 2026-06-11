@@ -1,0 +1,12 @@
+{
+  "domain": "residual-grid-consumption",
+  "name": "Residual Grid Consumption",
+  "documentation": "https://github.com/tcrnr1/ha-renewable-energy-community",
+  "iot_class": "calculated",
+  "issue_tracker": "https://github.com/tcrnr1/ha-renewable-energy-community/issues",
+  "version": "1.0.0",
+  "config_flow": true,
+  "codeowners": [
+    "@tcrnr1", "@DarkC35"
+  ]
+}

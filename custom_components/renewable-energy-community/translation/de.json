@@ -1,0 +1,17 @@
+{
+    "config": {
+        "step": {
+            "user": {
+                "title": "ENGERGIEGEMEINSCHAFT",
+                "description": "Erzeuge neue Entität zum Import der ENGERGIEGEMEINSCHAFT QH reports.",
+                "data": {
+                    "meter_point_number": "Zählerzugangspunkt",
+                    "name": "Name"
+                }
+            }
+        },
+        "error": {
+            "invalid_length": "Zählerzugangspunkt ist nicht korrekt, Zählerzugangspunkt muss 33 Zeichen enthalten."
+        }
+    }
+}

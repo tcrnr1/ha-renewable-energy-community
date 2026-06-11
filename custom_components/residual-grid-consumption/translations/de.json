@@ -1,0 +1,17 @@
+{
+    "config": {
+        "step": {
+            "user": {
+                "title": "RESTNETZBEZUG",
+                "description": "Erzeuge neue Entität zum Import der RESTNETZBEZUGS QH reports.",
+                "data": {
+                    "meter_point_number": "Zählerzugangspunkt",
+                    "name": "Name"
+                }
+            }
+        },
+        "error": {
+            "invalid_length": "Zählerzugangspunkt ist nicht korrekt, Zählerzugangspunkt muss 33 Zeichen enthalten."
+        }
+    }
+}
