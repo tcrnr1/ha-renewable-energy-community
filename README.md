@@ -41,3 +41,21 @@ Platform | Description
 
 Using your HA configuration directory (folder) as a starting point you should now also have this:
 
+
+## Import Data:
+
+To import the data, the CSV file must be prepared accordingly. The CSV file may only contain the following columns: date, time, and the respective column you want to import, either energy community or residual grid import. Delete all unnecessary columns from the CSV file.
+
+Note: For CSV files from LinzNetz.at, you first have to calculate the value of the energy community in the CSV file!
+
+Upload your CSV file to a directory in your config folder, (for example: MyDirectory), using the File Editor.
+
+To import the data, go to Settings → Developer Tools → Actions and search for Import Report. Select the corresponding report.
+
+Under entity_id, select the suggested sensor, and under path, enter the corresponding path to your CSV file, for example: /config/MyDirectory/your_csv_file.csv
+
+## Visualization of the data
+To display the data, you need the Energy Custom Graph Card by Thyraz: (https://github.com/Thyraz/energy-custom-graph)
+Displaying the data in the standard Home Assistant Energy Dashboard is not possible!
+Another visualization option is the Energy Flow Card Plus by flixlix: (https://github.com/flixlix/energy-flow-card-plus)
+Please refer to the respective repository for the card configuration.
