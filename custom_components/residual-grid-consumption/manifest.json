@@ -1,5 +1,5 @@
 {
-  "domain": "residual-grid-consumption",
+  "domain": "residual_grid_consumption",
   "name": "Residual Grid Consumption",
   "documentation": "https://github.com/tcrnr1/ha-renewable-energy-community",
   "iot_class": "calculated",
