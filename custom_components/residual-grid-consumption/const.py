@@ -1,7 +1,7 @@
 """Constants for Residual grid Consumption."""
 # Base component constants
 NAME = "Residual Grid Consumption"
-DOMAIN = "residual-grid-consumption"
+DOMAIN = "residual_grid_consumption"
 VERSION = "0.0.1"
 
 # Platforms
