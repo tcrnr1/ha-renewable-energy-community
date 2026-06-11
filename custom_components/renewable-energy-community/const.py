@@ -1,7 +1,7 @@
 """Constants for Renewable Energy Community."""
 # Base component constants
 NAME = "Renewable Energy Community"
-DOMAIN = "renewable-energy-community"
+DOMAIN = "renewable_energy_community"
 VERSION = "0.0.1"
 
 # Platforms
