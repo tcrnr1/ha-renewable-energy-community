@@ -483,8 +483,7 @@ class RenewableEnergyCommunitySensor(SensorEntity):
             identifiers={(DOMAIN, _unique_id)},
             name=_name,
         )
-
-self._attr_unique_id = f"{_unique_id}_{sensor_key}"
+        self._attr_unique_id = f"{_unique_id}_{sensor_key}"
     async def import_report(self, path: str) -> None:
         """Service to import csv data from path."""
         _LOGGER.debug("Import Report executed with path: %s", path)
