@@ -28,7 +28,7 @@ from homeassistant.helpers import entity_platform
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.util import dt as dt_util
 
-rom .const import (
+from .const import (
     CONF_METER_POINT_NUMBER,
     CONF_NAME,
     DEFAULT_NAME,
