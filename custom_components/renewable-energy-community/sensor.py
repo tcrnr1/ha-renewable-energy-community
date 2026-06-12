@@ -70,29 +70,28 @@ SENSOR_TYPES = {
 async def async_setup_entry(
     _hass: HomeAssistant, config_entry: ConfigEntry, async_add_devices
 ):
-    """Setup sensor platform."""
-
-    platform = entity_platform.async_get_current_platform()
-    platform.async_register_entity_service(
-        SERVICE_IMPORT_REPORT,
-        {
-            vol.Required("path"): str,
-        },
-        RenewableEnergyCommunitySensor.import_report.__name__,
-    )
-
-    entities = []
-
-    for sensor_key, sensor_config in SENSOR_TYPES.items():
-        entities.append(
-            RenewableEnergyCommunitySensor(
-                config_entry,
-                sensor_key,
-                sensor_config,
-            )
-        )
-
-    async_add_devices(entities)
+    SENSOR_TYPES = {
+    "feedin_grid": {
+        "name": "Einspeisung Netz",
+        "column": CSV_FEEDIN_GRID,
+        "icon": "mdi:transmission-tower-export",
+    },
+    "feedin_community": {
+        "name": "Einspeisung Gemeinschaft",
+        "column": CSV_FEEDIN_COMMUNITY,
+        "icon": "mdi:home-lightning-bolt",
+    },
+    "consumption_grid": {
+        "name": "Bezug Netz",
+        "column": CSV_CONSUMPTION_GRID,
+        "icon": "mdi:transmission-tower-import",
+    },
+    "consumption_community": {
+        "name": "Bezug Gemeinschaft",
+        "column": CSV_CONSUMPTION_COMMUNITY,
+        "icon": "mdi:home-lightning-bolt-outline",
+    },
+}
 
 
 
@@ -377,6 +376,7 @@ async def async_setup_entry(
     """Setup sensor platform."""
 
     platform = entity_platform.async_get_current_platform()
+
     platform.async_register_entity_service(
         SERVICE_IMPORT_REPORT,
         {
@@ -385,7 +385,18 @@ async def async_setup_entry(
         RenewableEnergyCommunitySensor.import_report.__name__,
     )
 
-    async_add_devices([RenewableEnergyCommunitySensor(config_entry)])
+    sensors = []
+
+    for sensor_key, sensor_config in SENSOR_TYPES.items():
+        sensors.append(
+            RenewableEnergyCommunitySensor(
+                config_entry,
+                sensor_key,
+                sensor_config,
+            )
+        )
+
+    async_add_devices(sensors)
 
 
 def get_csv_data_value_key(csv_data: list) -> str:
