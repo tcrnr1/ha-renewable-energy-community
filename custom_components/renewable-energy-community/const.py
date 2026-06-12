@@ -3,7 +3,7 @@
 # Base component constants
 NAME = "Renewable Energy Community"
 DOMAIN = "renewable_energy_community"
-VERSION = "1.1.0"
+VERSION = "0.1.0"
 
 # Platforms
 SENSOR = "sensor"
