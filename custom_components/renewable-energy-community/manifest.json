@@ -1,10 +1,10 @@
 {
-  "domain": "renewable_energy_community",
+  "domain": "renewable energy community",
   "name": "Renewable Energy Community",
   "documentation": "https://github.com/tcrnr1/ha-renewable-energy-community",
   "iot_class": "calculated",
   "issue_tracker": "https://github.com/tcrnr1/ha-renewable-energy-community/issues",
-  "version": "0.0.2",
+  "version": "0.0.1",
   "config_flow": true,
   "codeowners": [
     "@tcrnr1","@DarkC35"
