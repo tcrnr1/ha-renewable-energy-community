@@ -106,6 +106,15 @@ def parse_csv_date_str(csv_date_str: str) -> datetime:
     return parsed_str
     
 def parse_csv_datetime(record) -> datetime:
+    """Parses Datum + Uhrzeit from CSV."""
+    csv_datetime = f"{record[CSV_DATE_KEY]} {record[CSV_TIME_KEY]}"
+    return dt_util.as_utc(
+        datetime.strptime(csv_datetime, "%d.%m.%Y %H:%M").replace(
+            tzinfo=dt_util.get_time_zone("Europe/Vienna")
+        )
+    )
+    
+def parse_csv_datetime(record) -> datetime:
     """Parses Datum + Uhrzeit to UTC."""
 
     return dt_util.as_utc(
@@ -237,7 +246,7 @@ class RenewableEnergyCommunitySensor(SensorEntity):
             and parse_statistic_value_to_datetime(
                 last_inserted_stat[self.entity_id][0]["start"]
             )
-            < parse_csv_date_str(csv_data[0])
+            < parse_csv_datetime(csv_data[0])
         ):
             _sum = parse_value_to_decimal(last_inserted_stat[self.entity_id][0]["sum"])
             _LOGGER.debug("Previous inserted stats found, start sum with %f.", _sum)
@@ -245,7 +254,7 @@ class RenewableEnergyCommunitySensor(SensorEntity):
             inserted_stats = await get_instance(self.hass).async_add_executor_job(
                 statistics_during_period,
                 self.hass,
-                parse_csv_date_str(csv_data[0]) - timedelta(hours=1),
+                parse_csv_datetime(csv_data[0]) - timedelta(hours=1),
                 None,
                 [self.entity_id],
                 "hour",
@@ -261,7 +270,7 @@ class RenewableEnergyCommunitySensor(SensorEntity):
                 and parse_statistic_value_to_datetime(
                     inserted_stats[self.entity_id][0]["start"]
                 )
-                < parse_csv_date_str(csv_data[0])
+                < parse_csv_datetime(csv_data[0])
                 else Decimal(0)
             )
             _LOGGER.debug("Overlap detected, start sum with %f.", _sum)
@@ -351,8 +360,12 @@ from .const import (
     DEFAULT_NAME,
     DOMAIN,
     SERVICE_IMPORT_REPORT,
-    END_TIME_KEY,
-    START_TIME_KEY,
+    CSV_DATE_KEY,
+    CSV_TIME_KEY,
+    CSV_FEEDIN_GRID,
+    CSV_FEEDIN_COMMUNITY,
+    CSV_CONSUMPTION_GRID,
+    CSV_CONSUMPTION_COMMUNITY,
 )
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
@@ -539,7 +552,7 @@ class RenewableEnergyCommunitySensor(SensorEntity):
             and parse_statistic_value_to_datetime(
                 last_inserted_stat[self.entity_id][0]["start"]
             )
-            < parse_csv_date_str(csv_data[0])
+            < parse_csv_datetime(csv_data[0])
         ):
             _sum = parse_value_to_decimal(last_inserted_stat[self.entity_id][0]["sum"])
             _LOGGER.debug("Previous inserted stats found, start sum with %f.", _sum)
@@ -547,7 +560,7 @@ class RenewableEnergyCommunitySensor(SensorEntity):
             inserted_stats = await get_instance(self.hass).async_add_executor_job(
                 statistics_during_period,
                 self.hass,
-                parse_csv_date_str(csv_data[0]) - timedelta(hours=1),
+                parse_csv_datetime(csv_data[0]) - timedelta(hours=1),
                 None,
                 [self.entity_id],
                 "hour",
@@ -563,7 +576,7 @@ class RenewableEnergyCommunitySensor(SensorEntity):
                 and parse_statistic_value_to_datetime(
                     inserted_stats[self.entity_id][0]["start"]
                 )
-                < parse_csv_date_str(csv_data[0])
+                < parse_csv_datetime(csv_data[0])
                 else Decimal(0)
             )
             _LOGGER.debug("Overlap detected, start sum with %f.", _sum)
@@ -579,7 +592,7 @@ class RenewableEnergyCommunitySensor(SensorEntity):
                     raise HomeAssistantError(
                         "Invalid hour block detected. Start time of QH values must always be in the following order: xx:00, xx:15, xx:30, xx:45."
                     )
-                start = parse_csv_date_str(record[START_TIME_KEY])
+                start = parse_csv_date_str(record)
                 if daylight_saving_change_needs_additional_hour:
                     # double check for daylight saving change, reset the flag anyway
                     if start == statistics[-1]["start"]:
@@ -589,7 +602,7 @@ class RenewableEnergyCommunitySensor(SensorEntity):
                 # LINZ NETZ indicates a winter daylight saving change when the start_time of an hour block is equal to the end_time.
                 # Therefore it is necessary to add an additional (UTC) hour to the next hour.
                 if start == parse_csv_date_str(record[END_TIME_KEY]):
-                    daylight_saving_change_needs_additional_hour = True
+                    daylight_saving_change_needs_additional_hour = False
                 _sum += hourly_sum
                 statistics.append(
                     StatisticData(
