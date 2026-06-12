@@ -53,13 +53,9 @@ async def async_setup_entry(
             vol.Required("path"): str,
         },
         RenewableEnergyCommunitySensor.import_report.__name__,
-        ResidualGridConsumptionSensor.import_report.__name__,
     )
 
-    async_add_devices(
-        [RenewableEnergyCommunitySensor(config_entry)]
-        
-    )
+    async_add_devices([RenewableEnergyCommunitySensor(config_entry)])
 
 
 def get_csv_data_value_key(csv_data: list) -> str:
@@ -275,6 +271,3 @@ class RenewableEnergyCommunitySensor(SensorEntity):
         _LOGGER.debug(statistics)
         _LOGGER.debug(metadata)
         async_import_statistics(self.hass, metadata, statistics)
-
-
-
