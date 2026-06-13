@@ -67,10 +67,8 @@ SENSOR_TYPES = {
     },
 }
 
-async def async_setup_entry(
-    _hass: HomeAssistant, config_entry: ConfigEntry, async_add_devices
-):
-    SENSOR_TYPES = {
+
+SENSOR_TYPES = {
     "feedin_grid": {
         "name": "Einspeisung Netz",
         "column": CSV_FEEDIN_GRID,
@@ -79,7 +77,7 @@ async def async_setup_entry(
     "feedin_community": {
         "name": "Einspeisung Gemeinschaft",
         "column": CSV_FEEDIN_COMMUNITY,
-        "icon": "mdi:home-lightning-bolt",
+        "icon": "mdi:transmission-tower-export",
     },
     "consumption_grid": {
         "name": "Bezug Netz",
@@ -89,7 +87,7 @@ async def async_setup_entry(
     "consumption_community": {
         "name": "Bezug Gemeinschaft",
         "column": CSV_CONSUMPTION_COMMUNITY,
-        "icon": "mdi:home-lightning-bolt-outline",
+        "icon": "mdi:transmission-tower-import",
     },
 }
 
@@ -505,7 +503,8 @@ class RenewableEnergyCommunitySensor(SensorEntity):
 
         self._attr_should_poll = False
         self._attr_available = True
-
+        self._attr_native_value = 0
+        
         self._attr_icon = sensor_config["icon"]
 
         self._attr_device_info = DeviceInfo(
