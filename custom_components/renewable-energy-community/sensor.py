@@ -95,13 +95,18 @@ async def async_setup_entry(
 
 
 
-def parse_csv_date_str(csv_date_str: str) -> datetime:
-    """Parses the Austrian time string to an UTC datetime."""
+def parse_csv_datetime(record: dict) -> datetime:
+    """Parses Datum + Uhrzeit from CSV to UTC datetime."""
+
     parsed_str = dt_util.as_utc(
-        datetime.strptime(csv_date_str, "%d.%m.%Y %H:%M").replace(
+        datetime.strptime(
+            f"{record[CSV_DATE_KEY]} {record[CSV_TIME_KEY]}",
+            "%d.%m.%Y %H:%M",
+        ).replace(
             tzinfo=dt_util.get_time_zone("Europe/Vienna")
         )
     )
+
     return parsed_str
     
 def parse_csv_datetime(record) -> datetime:
@@ -285,7 +290,7 @@ class RenewableEnergyCommunitySensor(SensorEntity):
                     raise HomeAssistantError(
                         "Invalid hour block detected. Start time of QH values must always be in the following order: xx:00, xx:15, xx:30, xx:45."
                     )
-                start = parse_csv_date_str(record)
+                start = parse_csv_datetime(record)
                 if daylight_saving_change_needs_additional_hour:
                     # double check for daylight saving change, reset the flag anyway
                     if start == statistics[-1]["start"]:
@@ -294,7 +299,7 @@ class RenewableEnergyCommunitySensor(SensorEntity):
             if index % 4 == 0:
                 # LINZ NETZ indicates a winter daylight saving change when the start_time of an hour block is equal to the end_time.
                 # Therefore it is necessary to add an additional (UTC) hour to the next hour.
-                if start == parse_csv_date_str(record):
+                if start == parse_csv_datetime(record):
                     daylight_saving_change_needs_additional_hour = True
                 _sum += hourly_sum
                 statistics.append(
@@ -603,7 +608,7 @@ class RenewableEnergyCommunitySensor(SensorEntity):
                     raise HomeAssistantError(
                         "Invalid hour block detected. Start time of QH values must always be in the following order: xx:00, xx:15, xx:30, xx:45."
                     )
-                start = parse_csv_date_str(record)
+                start = parse_csv_datetime(record)
                 if daylight_saving_change_needs_additional_hour:
                     # double check for daylight saving change, reset the flag anyway
                     if start == statistics[-1]["start"]:
@@ -612,7 +617,7 @@ class RenewableEnergyCommunitySensor(SensorEntity):
             if index % 4 == 0:
                 # LINZ NETZ indicates a winter daylight saving change when the start_time of an hour block is equal to the end_time.
                 # Therefore it is necessary to add an additional (UTC) hour to the next hour.
-                if start == parse_csv_date_str(record[END_TIME_KEY]):
+                if start == parse_csv_datetime(record[END_TIME_KEY]):
                     daylight_saving_change_needs_additional_hour = False
                 _sum += hourly_sum
                 statistics.append(
