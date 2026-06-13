@@ -617,8 +617,8 @@ class RenewableEnergyCommunitySensor(SensorEntity):
             if index % 4 == 0:
                 # LINZ NETZ indicates a winter daylight saving change when the start_time of an hour block is equal to the end_time.
                 # Therefore it is necessary to add an additional (UTC) hour to the next hour.
-                if start == parse_csv_datetime(record[END_TIME_KEY]):
-                    daylight_saving_change_needs_additional_hour = False
+                
+                daylight_saving_change_needs_additional_hour = False
                 _sum += hourly_sum
                 statistics.append(
                     StatisticData(
